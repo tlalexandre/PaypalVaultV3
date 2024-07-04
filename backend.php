@@ -36,12 +36,12 @@ $CLIENT_ID = "Acg9KCKdtGoxx6rZGPjAXpAxiA60pKvnTBcXlM3dj7aSgX4Vo5sqinrTSrSrwOZjT-
 $APP_SECRET = "EPIrgzI3uZBmwifZPHY2Shw4vJo9KSHKCv62Wbo_iFT9IqUrw_e6u61rt4QiDHz9MKgCm9FuvCGYL8tv";
 global $userIDToken;
 global $customerID;
+global $vaultID;
 
 class MyOrder
 {
     private $accessToken;
     private $orderId;
-
 
     // Generating an Access Token for a new call to the API
     // It's good practice to generate a new access token for each call
@@ -92,6 +92,7 @@ class MyOrder
     // Create order
     public function createOrder()
     {
+        global $vaultID;
         $this->generateAccessToken();
 
         $data = [
@@ -102,18 +103,7 @@ class MyOrder
                         "currency_code" => "EUR",
                         "value" => "240.00",
                     ],
-                    "shipping" => [
-                        "address" => [
-                            "address_line_1" => "11,Rue St Exupery",
-                            "admin_area_2" => "Vannes",
-                            "admin_area_1" => "Morbihan",
-                            "postal_code" => "56000",
-                            "country_code" => "FR",
-                        ],
-                        "type" => "SHIPPING",
-                    ],
-                    // Please change the value with your company name
-                    "soft_descriptor" => "Primark web",
+
                 ]
             ],
         ];
@@ -147,7 +137,7 @@ class MyOrder
                         "payment_method_preference" => "IMMEDIATE_PAYMENT_REQUIRED",
                         "brand_name" => "Primark Stores Limited",
                         "landing_page" => "LOGIN",
-                        "shipping_preference" => "SET_PROVIDED_ADDRESS",
+                        "shipping_preference" => "NO_SHIPPING",
                         "user_action" => "PAY_NOW",
                         "return_url" => "https://example.com/returnUrl",
                         "cancel_url" => "https://example.com/cancelUrl",
@@ -202,11 +192,10 @@ class MyOrder
                     ],
                     "experience_context" => [
                         // Please change brand_name's value with your company name if you want to use this property.
-                        "payment_method_selected" => "PAYPAL",
                         "payment_method_preference" => "IMMEDIATE_PAYMENT_REQUIRED",
                         "brand_name" => "Primark Stores Limited",
                         "landing_page" => "LOGIN",
-                        "shipping_preference" => "SET_PROVIDED_ADDRESS",
+                        "shipping_preference" => "NO_SHIPPING",
                         "user_action" => "PAY_NOW",
                         "return_url" => "https://example.com/returnUrl",
                         "cancel_url" => "https://example.com/cancelUrl",
@@ -214,6 +203,13 @@ class MyOrder
                 ]
             ]
         ];
+
+        if (isset($_COOKIE['customerID'])) {
+            $customerID = $_COOKIE['customerID'];
+            $paypal_advanced_vault['payment_source']['card']['attributes']['customer'] = [
+                "id" => $customerID
+            ];
+        }
 
         $paypal_advanced = [
             "payment_source" => [
@@ -223,6 +219,18 @@ class MyOrder
                             "method" => "SCA_ALWAYS",
                         ]
                     ],
+                ]
+            ]
+        ];
+
+        if (isset($_COOKIE['vaultID'])) {
+            $vaultID = $_COOKIE['vaultID'];
+        }
+
+        $paypal_saved_card = [
+            "payment_source" => [
+                "card" => [
+                    "vault_id" => $vaultID
                 ]
             ]
         ];
@@ -240,13 +248,15 @@ class MyOrder
             if (isset($_GET['savePayment'])) {
                 $data = array_merge($data, $paypal_advanced_vault);
             }
+        } else if (isset($_GET['task']) && $_GET['task'] == 'useSavedCard') {
+            $data = array_merge($data, $paypal_saved_card);
         }
 
         // PayPal-Request-Id mandatory when we use payment_source in the request
         $requestid = "new-order-" . date("Y-m-d-h-i-s");
 
         $json = json_encode($data);
-
+        // print_r($json);
         $curl = curl_init();
 
         curl_setopt_array(
@@ -380,6 +390,7 @@ class MyOrder
     public function capturePayment()
     {
         global $customerID;
+        global $vaultID;
 
         $this->generateAccessToken();
 
@@ -409,12 +420,55 @@ class MyOrder
         $response = curl_exec($curl);
         curl_close($curl);
         $jsonResponse = json_decode($response);
-        if (isset($_COOKIE['customerID']) === false) {
-            $customerID = $jsonResponse->payment_source->paypal->attributes->vault->customer->id;
-            setcookie('customerID', $customerID, time() + (86400 * 30), "/");
+
+        if (isset($_COOKIE['customerID']) !== null) {
+            if (isset($jsonResponse->payment_source->paypal->attributes->vault->customer->id)) {
+                $customerID = $jsonResponse->payment_source->paypal->attributes->vault->customer->id;
+                setcookie('customerID', (string)$customerID, time() + (86400 * 30), "/");
+            } else if (isset($jsonResponse->payment_source->card->attributes->vault->customer->id)) {
+                // Handle the case where the customer ID is not present in the response
+                $vaultID = $jsonResponse->payment_source->card->attributes->vault->id;
+                $customerID = $jsonResponse->payment_source->card->attributes->vault->customer->id;
+                setcookie('customerID', (string)$customerID, time() + (86400 * 30), "/");
+                setcookie('vaultID', (string)$vaultID, time() + (86400 * 30), "/");
+            }
+        } else {
+            $customerID = null;
+        }
+
+        print_r($response);
+    }
+
+
+    public function listAllPaymentTokens()
+    {
+        global $customerID;
+        if (isset($_COOKIE['customerID'])) {
+            $customerID = $_COOKIE['customerID'];
         } else {
             $customerID = "";
         }
+        $this->generateAccessToken();
+
+        $curl = curl_init();
+
+        curl_setopt_array(
+            $curl,
+            array(
+                CURLOPT_URL => "https://api-m.sandbox.paypal.com/v3/vault/payment-tokens?customer_id=$customerID",
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_SSL_VERIFYHOST => false,
+                CURLOPT_SSL_VERIFYPEER => false,
+                CURLOPT_CUSTOMREQUEST => "GET",
+                CURLOPT_HEADER => false,
+                CURLOPT_HTTPHEADER => array(
+                    "Authorization: Bearer " . $this->accessToken,
+                ),
+            )
+        );
+
+        $response = curl_exec($curl);
+        curl_close($curl);
         print_r($response);
     }
 }   // EOC

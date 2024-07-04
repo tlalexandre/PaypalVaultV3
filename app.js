@@ -19,17 +19,19 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************/
 
 /* Buttons */
-let saveBtn = document.getElementById('save');
+let saveBtn = document.getElementById("save");
 let savePayment;
 paypal
   .Buttons({
-    // When PayPal button is clicked, an order is created on the server 
+    // When PayPal button is clicked, an order is created on the server
     //  and the API returns the Order ID.
     // We need the Order ID to "Capture" the payment
     // Please check all the JavaScript events available here:
     // https://developer.paypal.com/sdk/js/reference/#link-paypalbuttonsoptions
     createOrder: function (data, actions) {
-      const url = `backend.php?task=button${saveBtn.checked ? '&savePayment' : ''}`;
+      const url = `backend.php?task=button${
+        saveBtn.checked ? "&savePayment" : ""
+      }`;
       return fetch(url, {
         method: "post",
       })
@@ -51,10 +53,10 @@ paypal
           // Please visit the following page and write code to manage any of these possible circumstances
           // https://developer.paypal.com/docs/api/orders/v2/#definition-capture_status
           // The following code will be replacing the checkout with a successful message and the API response for the developer.
-          let div_mycart = document.getElementById('mycart');
+          let div_mycart = document.getElementById("mycart");
           let div_title = document.getElementById("title");
-          let div_response = document.getElementById('api-response');
-          let div_json = document.getElementById('api-json');
+          let div_response = document.getElementById("api-response");
+          let div_json = document.getElementById("api-json");
           let div_api_title = document.getElementById("api-title");
           let res = JSON.stringify(orderData, null, 2);
 
@@ -91,10 +93,8 @@ paypal
       },      
 
     */
-
-  }).render("#paypal-button-container");
-
-
+  })
+  .render("#paypal-button-container");
 
 /* Advanced Credit Card Form - cardFields */
 
@@ -103,9 +103,10 @@ let GlorderID;
 
 // Create the Card Fields Component and define callbacks
 const cardField = paypal.CardFields({
-
   createOrder: function (data) {
-    const url =`backend.php?task=advancedCC${saveBtn.checked ? '&savePayment' : ''}`
+    const url = `backend.php?task=advancedCC${
+      saveBtn.checked ? "&savePayment" : ""
+    }`;
     return fetch(url)
       .then((res) => {
         return res.json();
@@ -149,19 +150,21 @@ const cardField = paypal.CardFields({
             .then((captureData) => {
               // Frontend to replace with a successful message
               // You could use a redirect instead
-              let div_mycart = document.getElementById('mycart');
+              let div_mycart = document.getElementById("mycart");
               let div_title = document.getElementById("title");
-              let div_response = document.getElementById('api-response');
-              let div_json = document.getElementById('api-json');
-              let div_api_title = document.getElementById('api-title');
+              let div_response = document.getElementById("api-response");
+              let div_json = document.getElementById("api-json");
+              let div_api_title = document.getElementById("api-title");
               let res = JSON.stringify(captureData, null, 2);
               let success = "Transaction completed.";
-              let failed = "The payment for this order could not be captured. Please try another payment method.";
+              let failed =
+                "The payment for this order could not be captured. Please try another payment method.";
 
-              // captureData contains the API Response 
+              // captureData contains the API Response
               // We assign the status of our payment that is in the API Response to the variable "status"
-              // A positive status would be "COMPLETED"            
-              let status = captureData.purchase_units[0].payments.captures[0].status;
+              // A positive status would be "COMPLETED"
+              let status =
+                captureData.purchase_units[0].payments.captures[0].status;
               // Let's now check the status and proceed
               status = JSON.stringify(status);
 
@@ -170,9 +173,9 @@ const cardField = paypal.CardFields({
               // Please visit the following page and write code to manage any of these possible circumstances
               // https://developer.paypal.com/docs/api/orders/v2/#definition-capture_status
               // The following code will be replacing the checkout with a successful message and the full API response for the developer
-              if (status.replaceAll('"', '') == "COMPLETED") {
+              if (status.replaceAll('"', "") == "COMPLETED") {
                 // Once we make sure that the outcome of our transaction is "COMPLETED"
-                //  we show a positive message to the buyer      
+                //  we show a positive message to the buyer
                 div_mycart.style.display = "none";
                 div_response.style.display = "block";
                 div_title.innerHTML = success;
@@ -189,7 +192,7 @@ const cardField = paypal.CardFields({
             });
         } else {
           // If orderData.result is not "capture"
-          console.log("An issue with the 3D Secure occurred.")
+          console.log("An issue with the 3D Secure occurred.");
         }
       });
   },
@@ -214,53 +217,76 @@ const cardField = paypal.CardFields({
   },
 });
 
-
 // Render each field after checking for eligibility
 if (cardField.isEligible()) {
-
   const nameField = cardField.NameField();
-  nameField.render('#card-name-field-container');
+  nameField.render("#card-name-field-container");
 
   const numberField = cardField.NumberField();
-  numberField.render('#card-number-field-container');
+  numberField.render("#card-number-field-container");
 
   const cvvField = cardField.CVVField();
-  cvvField.render('#card-cvv-field-container');
+  cvvField.render("#card-cvv-field-container");
 
   const expiryField = cardField.ExpiryField();
-  expiryField.render('#card-expiry-field-container');
+  expiryField.render("#card-expiry-field-container");
 
   // Adding click listener to submit button and calling the submit function on the CardField component
-  document.getElementById("card-field-submit-button").addEventListener("click", () => {
-    cardField
-      .submit({
-        // This is the buyer billing address that will be used for the 3D Secure
-        // You either could give the buyer the chance to enter a billing address in a form
-        // or take it from a database in the case you already have it.
-        // Do not disregard the billing address.        
-        // Cardholder's first and last name
-        name: "Walter White",
-        // Billing Address 
-        billingAddress: {
-          // Street address, line 1
-          address_line_1: "via della notte 12",
-          // Street address, line 2 (Ex: Unit, Apartment, etc.)
-          address_line_2: "Parco Bello",
-          // City
-          admin_area_2: "Bologna",
-          // State
-          admin_area_1: "BO",
-          // Postal Code
-          postal_code: "00020",
-          // Country Code Format must be: https://developer.paypal.com/reference/country-codes/ 
-          country_code: "FR",
-        },
-      })
-      .catch((err) => {
-        // If we receive any error not related to the SDK
-        // Check the JavaScript Console
-        console.log("An error has occurred:");
-        console.log(err);
-      });
-  });
-};
+  document
+    .getElementById("card-field-submit-button")
+    .addEventListener("click", () => {
+      cardField
+        .submit({
+          // This is the buyer billing address that will be used for the 3D Secure
+          // You either could give the buyer the chance to enter a billing address in a form
+          // or take it from a database in the case you already have it.
+          // Do not disregard the billing address.
+          // Cardholder's first and last name
+          name: "Walter White",
+          // Billing Address
+          billingAddress: {
+            // Street address, line 1
+            address_line_1: "via della notte 12",
+            // Street address, line 2 (Ex: Unit, Apartment, etc.)
+            address_line_2: "Parco Bello",
+            // City
+            admin_area_2: "Bologna",
+            // State
+            admin_area_1: "BO",
+            // Postal Code
+            postal_code: "00020",
+            // Country Code Format must be: https://developer.paypal.com/reference/country-codes/
+            country_code: "FR",
+          },
+        })
+        .catch((err) => {
+          // If we receive any error not related to the SDK
+          // Check the JavaScript Console
+          console.log("An error has occurred:");
+          console.log(err);
+        });
+    });
+}
+
+let savedCardBtn = document.getElementById("useSavedCard");
+savedCardBtn.addEventListener("click", function () {
+  return fetch("backend.php?task=useSavedCard")
+    .then((response) => response.json())
+    .then((captureData) => {
+      // Frontend to replace with a successful message
+      // You could use a redirect instead
+      let div_mycart = document.getElementById("mycart");
+      let div_title = document.getElementById("title");
+      let div_response = document.getElementById("api-response");
+      let div_json = document.getElementById("api-json");
+      let div_api_title = document.getElementById("api-title");
+      let res = JSON.stringify(captureData, null, 2);
+      let success = "Transaction completed.";
+      div_mycart.style.display = "none";
+                div_response.style.display = "block";
+                div_title.innerHTML = success;
+                div_title.style.color = "#009cde";
+                div_api_title.innerHTML = "API response:";
+                div_json.innerHTML = res;
+    });
+});
