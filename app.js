@@ -205,11 +205,11 @@ const cardField = paypal.CardFields({
           if (tdsresponse.result) result = tdsresponse.result;
 
           // Redirecting to an error/payment_failed page
-          window.location.href = 'payment_failed.php?result=' + result;
+          // window.location.href = 'payment_failed.php?result=' + result;
         });
     } else {
       // Any other SDK error not related to the 3D Secure will be managed here
-      window.location.href = 'payment_failed.php?error=' + err;
+      // window.location.href = 'payment_failed.php?error=' + err;
     }
   },
 });
