@@ -425,8 +425,7 @@ class MyOrder
             if (isset($jsonResponse->payment_source->paypal->attributes->vault->customer->id)) {
                 $customerID = $jsonResponse->payment_source->paypal->attributes->vault->customer->id;
                 setcookie('customerID', (string)$customerID, time() + (86400 * 30), "/");
-            } else if (isset($jsonResponse->payment_source->card->attributes->vault->customer->id)) {
-                // Handle the case where the customer ID is not present in the response
+            } elseif (isset($jsonResponse->payment_source->card->attributes->vault->customer->id)) {
                 $vaultID = $jsonResponse->payment_source->card->attributes->vault->id;
                 $customerID = $jsonResponse->payment_source->card->attributes->vault->customer->id;
                 setcookie('customerID', (string)$customerID, time() + (86400 * 30), "/");
@@ -436,9 +435,10 @@ class MyOrder
             $customerID = null;
         }
 
-        print_r($response);
+        // Set the content type to JSON and output the response
+        header('Content-Type: application/json');
+        echo $response;
     }
-
 
     public function listAllPaymentTokens()
     {
@@ -463,13 +463,17 @@ class MyOrder
                 CURLOPT_HEADER => false,
                 CURLOPT_HTTPHEADER => array(
                     "Authorization: Bearer " . $this->accessToken,
+                    "Content-Type: application/json",
                 ),
             )
         );
 
         $response = curl_exec($curl);
         curl_close($curl);
-        print_r($response);
+
+        // Set the content type to JSON and output the response
+        header('Content-Type: application/json');
+        echo $response;
     }
 }   // EOC
 
@@ -481,7 +485,13 @@ if (isset($_GET['token'])) $myOrder->generateAccessToken();
 
 
 // Create order through PayPal Button or Credit Card
-if (isset($_GET['task'])) $myOrder->createOrder();
+if (isset($_GET['task'])) {
+    if ($_GET['task'] == 'listCreditCards') {
+        $myOrder->listAllPaymentTokens();
+    } else {
+        $myOrder->createOrder();
+    }
+}
 
 // Capture payment placed through the PayPal Button
 if (isset($_GET['order']) || isset($_GET['capture'])) $myOrder->capturePayment();

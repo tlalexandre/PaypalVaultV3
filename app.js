@@ -283,10 +283,67 @@ savedCardBtn.addEventListener("click", function () {
       let res = JSON.stringify(captureData, null, 2);
       let success = "Transaction completed.";
       div_mycart.style.display = "none";
-                div_response.style.display = "block";
-                div_title.innerHTML = success;
-                div_title.style.color = "#009cde";
-                div_api_title.innerHTML = "API response:";
-                div_json.innerHTML = res;
+      div_response.style.display = "block";
+      div_title.innerHTML = success;
+      div_title.style.color = "#009cde";
+      div_api_title.innerHTML = "API response:";
+      div_json.innerHTML = res;
     });
 });
+
+document.addEventListener("DOMContentLoaded", function () {
+  fetch("backend.php?task=listCreditCards")
+    .then(response => response.json())
+    .then(data => {
+      const paymentTokens = data.payment_tokens;
+      const cardsContainer = document.getElementById("cards-container");
+
+      // Filter out only credit card payment tokens
+      const creditCardTokens = paymentTokens.filter(token => token.payment_source.card);
+
+      creditCardTokens.forEach((token) => {
+        const cardData = token.payment_source.card;
+        const cardItem = document.createElement("li");
+        cardItem.classList.add("card-item");
+
+        cardItem.innerHTML = `
+          <div class="card">
+            <div class="card-brand">${cardData.brand}</div>
+            <div class="chip"></div>
+            <div class="card-number">${formatCardNumber(cardData.last_digits)}</div>
+            <div class="card-name">${cardData.name}</div>
+            <div class="card-expiry">${formatExpiryDate(cardData.expiry)}</div>
+          </div>
+        `;
+
+        // Optional: Add click event listener to select the card
+        cardItem.addEventListener('click', () => {
+          selectCard(cardItem);
+        });
+
+        cardsContainer.appendChild(cardItem);
+      });
+    })
+    .catch(error => {
+      console.error("Error fetching payment tokens:", error);
+    });
+});
+
+function formatCardNumber(lastDigits) {
+  return `**** **** **** ${lastDigits}`;
+}
+
+function formatExpiryDate(expiry) {
+  const [year, month] = expiry.split('-');
+  return `${month}/${year.slice(-2)}`;
+}
+
+function selectCard(cardElement) {
+  // Remove the "selected" class from all cards
+  document.querySelectorAll('.card-item').forEach(item => item.classList.remove('selected'));
+
+  // Add the "selected" class to the clicked card
+  cardElement.classList.add('selected');
+
+  
+}

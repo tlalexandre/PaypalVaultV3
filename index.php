@@ -24,7 +24,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Instantiate the MyOrder class and generate the access token
 $order = new MyOrder();
 $order->generateAccessToken();
-$order->listAllPaymentTokens();
+// $order->listAllPaymentTokens();
 
 // Assuming $userIDToken is set as a global variable in backend.php
 global $userIDToken;
@@ -63,6 +63,10 @@ print_r($customerID);
 
         <br />
         <h2>Credit Card</h2>
+        <p>Choose one of your saved cards</p>
+        <ul id="cards-container" class="card-list"></ul>
+        <button id="useSavedCard">Use Saved Credit Card</button>
+        <p>Or use a new card</p>
         <div id="checkout-form">
             <div id="card-name-field-container"></div>
             <div id="card-number-field-container"></div>
@@ -81,7 +85,6 @@ print_r($customerID);
         <h6 style="font-size: 0.9rem; color: #32424e; margin: 0; padding: 0;" id="api-title"></h6>
         <pre id="api-json" style="font-size: 0.9rem; color: #32424e; padding-bottom: 2rem;"></pre>
     </div>
-    <button id="useSavedCard">Use Saved Credit Card</button>
     <div class="checkbox">
         <input type="checkbox" id="save" name="save">
         <label for="save">Save your card</label>

@@ -71,3 +71,61 @@ body {
   display: flex;
   justify-content: center;
  }
+ ul.card-list {
+  list-style-type: none; /* Remove default list styling */
+  padding: 0;
+  margin: 0;
+  width: fit-content;
+}
+li.card-item {
+  margin: 10px;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+li.card-item:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+ .card {
+  width: 300px;
+  height: 180px;
+  border-radius: 10px;
+  background-color: #1e2b37;
+  color: #fff;
+  padding: 20px;
+  font-family: 'Arial', sans-serif;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin: 10px;
+  display: flex;
+  flex-direction: column;
+  vertical-align: top;
+}
+.card-number, .card-name, .card-expiry, .card-cvc {
+  margin: 10px 0;
+}
+.card-number {
+  font-size: 1.2em;
+  letter-spacing: 2px;
+}
+.card-name {
+  text-transform: uppercase;
+}
+.card-brand{
+  font-size: 1.7rem;
+  font-weight:bold;
+}
+
+.chip{
+  background: url(./chipCreditCard.png) no-repeat center center;
+  background-size: cover;
+  height: 90px;
+  width: 60px;
+}
+
+.selected{
+  background-color: #026b9c;
+}
