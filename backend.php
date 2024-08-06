@@ -475,6 +475,28 @@ class MyOrder
         header('Content-Type: application/json');
         echo $response;
     }
+
+    public function setVaultID()
+    {
+        // Get the raw POST data
+        $rawInput = file_get_contents("php://input");
+        $data = json_decode($rawInput, true);
+
+        // Check if the vaultID is sent in the POST request
+        if (isset($data['vaultID'])) {
+            $vaultID = $data['vaultID'];
+
+            // Set the cookie with the vaultID
+            // The cookie will expire in 7 days
+            setcookie("vaultID", $vaultID, time() + (7 * 24 * 60 * 60), "/");
+
+            // Respond with a success message
+            echo json_encode(array("status" => "success", "message" => "VaultID set successfully"));
+        } else {
+            // Respond with an error message if vaultID is not set
+            echo json_encode(array("status" => "error", "message" => "vaultID is required"));
+        }
+    }
 }   // EOC
 
 
@@ -488,6 +510,8 @@ if (isset($_GET['token'])) $myOrder->generateAccessToken();
 if (isset($_GET['task'])) {
     if ($_GET['task'] == 'listCreditCards') {
         $myOrder->listAllPaymentTokens();
+    } else if ($_GET['task'] == 'setVaultID') {
+        $myOrder->setVaultID();
     } else {
         $myOrder->createOrder();
     }

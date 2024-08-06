@@ -318,7 +318,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // Optional: Add click event listener to select the card
         cardItem.addEventListener('click', () => {
-          selectCard(cardItem);
+          selectCard(cardItem, token.id);
         });
 
         cardsContainer.appendChild(cardItem);
@@ -338,12 +338,28 @@ function formatExpiryDate(expiry) {
   return `${month}/${year.slice(-2)}`;
 }
 
-function selectCard(cardElement) {
+function selectCard(cardElement, vaultID) {
   // Remove the "selected" class from all cards
   document.querySelectorAll('.card-item').forEach(item => item.classList.remove('selected'));
+
+  console.log("Card selected")
 
   // Add the "selected" class to the clicked card
   cardElement.classList.add('selected');
 
-  
+  // Send request to the backend to set the vaultID
+  fetch("backend.php?task=setVaultID", {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ vaultID: vaultID })
+  })
+  .then(response => response.json())
+  .then(data => {
+    console.log("VaultID set successfully:", data);
+  })
+  .catch(error => {
+    console.error("Error setting VaultID:", error);
+  });
 }
